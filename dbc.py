@@ -1,0 +1,5 @@
+Host ="localhost"
+Port ="3306" 
+User = "root"
+Pwd="newpass"
+DB= "world"
