@@ -9,6 +9,10 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 import IPython
+import TemplateConfig
+
+
+st.markdown(TemplateConfig.page_bg, unsafe_allow_html=True)
 
 def init_database(user: str, password: str, host: str, port: str, database: str) -> SQLDatabase:
   db_uri = f"mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}"
@@ -51,8 +55,9 @@ def get_sql_response(schema,question,chat_history):
         """.format(schema,question,chat_history)}
 
         response = requests.post(model.url, json=sql_prompt, headers=model.headers)
+        # print(response.json()['text'])
         print(response.json())
-        return response.json()
+        return response.json()['text']
 
 
 def get_plot_response(schema, question, query, sql_engine, db,data,chat_history):
@@ -98,24 +103,24 @@ def get_plot_response(schema, question, query, sql_engine, db,data,chat_history)
             Do not wrap the python query in any other text, not even backticks.
             Use only "altair" library to plot the graphs and "Pandas" for connection and dataframe handling using required orderby & groupby clauses.
             and while writing the sql query, consider it without any line breaks.
-            always assign the code compoents for charts under "chart" variable and always sort it by a numeric column based on user query
-            You can return none if the data frame has just only 1 column or if the plot is more complicated to fit in traditional plotting style.
+
+            priority: always assign the code compoents for charts under "chart" variable and always sort it by a numeric column based on user query
+            
+            You can return none if the data frame has just only 1 column or only 1 row or if the plot is more complicated to fit in traditional plotting style.
             Your turn:
 
             """.format(schema,question,query,sql_engine,db,chat_history)
             }
         response = requests.post(model.url, json=plot_prompt, headers=model.headers)
-        print(response.json())
-        return response.json()
+        print(response.json()['text'])
+        return response.json()['text']
 
 def get_lang_response(schema, question, query, sql_engine, db, data,chat_history):      
         lang_prompt = {
             "prompt":f"""You are a data analyst at a company. You are interacting with a user who is asking you questions about the company's database.
             Based on the table schema below, user question, sql query and data, Write a natural language response.
             Use the data provided below, it was generated as a output from the sql query, that would be your source of truth.
-            Take the conversation history into account.
 
-                Conversation History: {chat_history} 
                 User question: {question}
                 SQL Query: <SQL>{query}</SQL>
                 Data : {data}
@@ -126,18 +131,19 @@ def get_lang_response(schema, question, query, sql_engine, db, data,chat_history
             """.format(schema,question,query,sql_engine,db,data,chat_history)
             }
         response = requests.post(model.url, json=lang_prompt, headers=model.headers)
-        print(response.json())
-        return response.json()
+        print(response.json()['text'])
+        return response.json()['text']
 
 #Setting page title
+# st.set_page_config(layout="wide")
 st.title("Chat with your data...")
 
 #Checking if the chat history in session state, to identify if it's the beginning of the chat and display standard message
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [ AIMessage(content="Hello! I'm a SQL assistant. Ask me anything about your database."),]  
 
-if "query_history" not in st.session_state:
-    st.session_state.query_history = [AIMessage(content="Hello! I'm a SQL assistant. Ask me anything about your database."), ]  
+# if "query_history" not in st.session_state:
+#     st.session_state.query_history = [AIMessage(content="Hello! I'm a SQL assistant. Ask me anything about your database."), ]  
 
 
 with st.sidebar:
@@ -189,25 +195,28 @@ if user_query is not None and user_query.strip() != "":
         plot_response = extract_code_from_text(get_plot_response(schema=schema, query=sql_response, sql_engine= sql_engine, db= db, question=user_query,data = data, chat_history= st.session_state.chat_history))
         lang_response = get_lang_response(schema=schema, query=sql_response, sql_engine= sql_engine, db= db, question=user_query, data = data,chat_history= st.session_state.chat_history)
         st.markdown(lang_response)
-        exec(plot_response)
-        if 'chart' in globals():
-                # Access the 'chart' object
-                chart = globals()['chart']
-                
-                # Check if 'chart' is an Altair chart object
-                if isinstance(chart, alt.Chart):
-                    # Display the Altair chart
-                    st.altair_chart(chart.interactive(), use_container_width=True)
+        try:
+            exec(plot_response)
+            if 'chart' in globals():
+                    # Access the 'chart' object
+                    chart = globals()['chart']
+                    
+                    # Check if 'chart' is an Altair chart object
+                    if isinstance(chart, alt.Chart):
+                        # Display the Altair chart
+                        st.altair_chart(chart.interactive(), use_container_width=True)
 
-                    # Append the chart object to the chat history
-                    # st.session_state.chat_history.append(chart)
-                else:
-                    # Handle the case where 'chart' is not an Altair chart object
-                    st.error("The generated chart is not valid.")
-        else:
-            # Handle the case where 'chart' is not defined in the executed code
-            st.error("No chart found in the code output.")
+                        # Append the chart object to the chat history
+                        # st.session_state.chat_history.append(chart)
+                    else:
+                        # Handle the case where 'chart' is not an Altair chart object
+                        st.error("The generated chart is not valid.")
+            else:
+                # Handle the case where 'chart' is not defined in the executed code
+                 st.error("No chart found in the code output.")
+        except Exception as e:
+            print(e)
+            st.markdown("No Plot for the above query")
 
-
-    st.session_state.query_history.append(AIMessage(content = sql_response))
+    # st.session_state.query_history.append(AIMessage(content = sql_response)
     st.session_state.chat_history.append(AIMessage(content = lang_response))

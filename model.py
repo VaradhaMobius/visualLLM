@@ -48,4 +48,3 @@ headers = {
             
 #             Your turn:
 #             {question}
-        
