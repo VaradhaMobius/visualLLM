@@ -31,7 +31,8 @@ def get_sql_response(schema,question,chat_history):
         sql_prompt = {
         "prompt":f"""You are a data analyst at a company. You are interacting with a user who is asking you questions about the company's database.
         Based on the table schema below, write a SQL query that would answer the user's question. 
-        Take the conversation history into account, Assign more weight to last appended conversations and pick columns if the conversations are related.
+        Take the conversation history alias chat history into account before writing the query.
+        Give higher weightage and consider conversation history when user mentions terms like "these", "above", "earlier", "previous" etc. and choose the filter conditions accordingly.
 
         Conversation History: {chat_history} 
         <SCHEMA>{schema}</SCHEMA>
@@ -135,6 +136,10 @@ st.title("Chat with your data...")
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [ AIMessage(content="Hello! I'm a SQL assistant. Ask me anything about your database."),]  
 
+if "query_history" not in st.session_state:
+    st.session_state.query_history = [AIMessage(content="Hello! I'm a SQL assistant. Ask me anything about your database."), ]  
+
+
 with st.sidebar:
     st.subheader("Connect to Database..")
 
@@ -203,4 +208,6 @@ if user_query is not None and user_query.strip() != "":
             # Handle the case where 'chart' is not defined in the executed code
             st.error("No chart found in the code output.")
 
+
+    st.session_state.query_history.append(AIMessage(content = sql_response))
     st.session_state.chat_history.append(AIMessage(content = lang_response))
