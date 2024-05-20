@@ -11,7 +11,8 @@ import altair as alt
 import IPython
 import TemplateConfig
 
-
+st.sidebar.image("logo-black.png")
+# add_logo("logo-black.png")
 st.markdown(TemplateConfig.page_bg, unsafe_allow_html=True)
 
 def init_database(user: str, password: str, host: str, port: str, database: str) -> SQLDatabase:
