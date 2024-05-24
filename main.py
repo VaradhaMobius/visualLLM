@@ -196,7 +196,6 @@ if user_query is not None and user_query.strip() != "":
         data =  pd.read_sql_query(sql_response, sql_engine)
         sql_response = get_plot_response(schema=schema, query=sql_response, sql_engine= sql_engine, db= db, question=user_query,data = data, chat_history= st.session_state.chat_history)  
         plot_response = extract_code_from_text(sql_response)
-        st.write(sql_response, magicEnabled = False)
         lang_response = get_lang_response(schema=schema, query=sql_response, sql_engine= sql_engine, db= db, question=user_query, data = data,chat_history= st.session_state.chat_history)
         st.markdown(lang_response)
         try:
@@ -221,6 +220,9 @@ if user_query is not None and user_query.strip() != "":
         except Exception as e:
             print(e)
             st.markdown("No Plot for the above query")
+
+    with st.expander("Check Code"):
+        st.write(sql_response)
 
     # st.session_state.query_history.append(AIMessage(content = sql_response)
     st.session_state.chat_history.append(AIMessage(content = lang_response))
