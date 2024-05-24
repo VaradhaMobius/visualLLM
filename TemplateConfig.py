@@ -4,8 +4,12 @@ page_bg = f"""
 {{
     padding-top: 0rem;
     padding-bottom: 0rem;
-    padding-left: 0.2rem;
-    padding-right: 1rem;
+    padding-left: 0rem;
+    padding-right: 0rem;
+}}
+
+iframe {{
+   height: inherit;
 }}
 
 [data-testid = "stToolbar"] {{
@@ -19,8 +23,9 @@ page_bg = f"""
 
 [data-testid = "baseButton-header"] {{
     background-color: rgba(0,0,0,0);
-    display: none
+    display: none;
 }}
+
 
 [data-testid="stSidebar"]
 {{
@@ -36,9 +41,19 @@ page_bg = f"""
     padding-top: 0rem;
 }}
 
+[data-testid = "IframeResizerAnchor"] {{
+    background-color: rgba(0,0,0,0);
+    display: none;
+}}
+
 [data-testid="stSidebarNav"]
 {{
-    background-position: 20px 30px;
+    background-position: 10px 30px;
+}}
+
+[data-testid="stSidebarUserContent"]
+{{
+    padding: 1.8rem 1.5rem;
 }}
 
 [data-testid="stAppViewContainer"]
