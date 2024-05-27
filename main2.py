@@ -11,9 +11,12 @@ import altair as alt
 import IPython
 import TemplateConfig
 
+st.title("Chat with your data...")
+
 st.sidebar.image("logo-black.png")
 # add_logo("logo-black.png")
 st.markdown(TemplateConfig.page_bg, unsafe_allow_html=True)
+column1,column2 =st.columns((2,1))
 
 def init_database(user: str, password: str, host: str, port: str, database: str) -> SQLDatabase:
   db_uri = f"mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}"
@@ -137,15 +140,10 @@ def get_lang_response(schema, question, query, sql_engine, db, data,chat_history
 
 #Setting page title
 # st.set_page_config(layout="wide")
-st.title("Chat with your data...")
 
 #Checking if the chat history in session state, to identify if it's the beginning of the chat and display standard message
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = [ AIMessage(content="Hello! I'm a SQL assistant. Ask me anything about your database."),]  
-
-# if "query_history" not in st.session_state:
-#     st.session_state.query_history = [AIMessage(content="Hello! I'm a SQL assistant. Ask me anything about your database."), ]  
-
 
 with st.sidebar:
     st.subheader("Connect to Database..")
@@ -174,26 +172,17 @@ db = sql_connect[0]
 schema = sql_connect[1].get_table_info()
 sql_engine = sql_connect[2]
 
-for message in st.session_state.chat_history:
-    if isinstance(message, AIMessage):
-        with st.chat_message("AI"):
-            st.markdown(message.content)
-    elif isinstance(message, HumanMessage):
-        with st.chat_message("Human"):
-            st.markdown(message.content)
-
 user_query = st.chat_input("Type a message...")
-if user_query is not None and user_query.strip() != "":
-    st.session_state.chat_history.append(HumanMessage(content = user_query))
 
+if user_query is not None and user_query.strip() != "":
     with st.chat_message("Human"):
         st.markdown(user_query)
-    
+
     with st.chat_message("AI"):
-        # response = get_response(user)
         sql_response = get_sql_response(schema=schema,question= user_query,chat_history= st.session_state.chat_history)
-        data =  pd.read_sql_query(sql_response, sql_engine)  
-        plot_response = extract_code_from_text(get_plot_response(schema=schema, query=sql_response, sql_engine= sql_engine, db= db, question=user_query,data = data, chat_history= st.session_state.chat_history))
+        data =  pd.read_sql_query(sql_response, sql_engine)
+        sql_response = get_plot_response(schema=schema, query=sql_response, sql_engine= sql_engine, db= db, question=user_query,data = data, chat_history= st.session_state.chat_history)  
+        plot_response = extract_code_from_text(sql_response)
         lang_response = get_lang_response(schema=schema, query=sql_response, sql_engine= sql_engine, db= db, question=user_query, data = data,chat_history= st.session_state.chat_history)
         st.markdown(lang_response)
         try:
@@ -214,10 +203,10 @@ if user_query is not None and user_query.strip() != "":
                         st.error("The generated chart is not valid.")
             else:
                 # Handle the case where 'chart' is not defined in the executed code
-                 st.error("No chart found in the code output.")
+                    st.error("No chart found in the code output.")
         except Exception as e:
             print(e)
             st.markdown("No Plot for the above query")
 
-    # st.session_state.query_history.append(AIMessage(content = sql_response)
-    st.session_state.chat_history.append(AIMessage(content = lang_response))
+        with st.expander("Check Code"):
+            st.write(sql_response)
