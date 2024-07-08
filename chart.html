@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@5.17.0"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "data": {"name": "data-05e9ca35474700fad0c3dc59e974155d"}, "mark": {"type": "bar"}, "encoding": {"color": {"field": "Language", "type": "nominal"}, "x": {"field": "Language", "sort": "-y", "type": "nominal"}, "y": {"field": "TotalPopulation", "type": "quantitative"}}, "$schema": "https://vega.github.io/schema/vega-lite/v5.17.0.json", "datasets": {"data-05e9ca35474700fad0c3dc59e974155d": [{"Language": "Chinese", "TotalPopulation": 1178103517.0}, {"Language": "Hindi", "TotalPopulation": 404451138.0}, {"Language": "English", "TotalPopulation": 343470681.8}, {"Language": "Spanish", "TotalPopulation": 333513651.8}, {"Language": "Arabic", "TotalPopulation": 226340372.0}, {"Language": "Portuguese", "TotalPopulation": 175868881.0}, {"Language": "Russian", "TotalPopulation": 131281602.0}, {"Language": "Bengali", "TotalPopulation": 126184435.0}, {"Language": "Japanese", "TotalPopulation": 125573574.0}, {"Language": "German", "TotalPopulation": 87155999.6}]}};
+      var embedOpt = {"renderer": "svg", "mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>

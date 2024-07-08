@@ -1,5 +1,5 @@
 # URL of the endpoint
-url = "http://10.101.11.23:8000/deepseek_ai_model"
+url = "http://48.217.25.247:8081/deepseek_Instruct"
 
 headers = {
     "Accept": "application/json",

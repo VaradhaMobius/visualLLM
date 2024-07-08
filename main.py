@@ -11,6 +11,8 @@ import altair as alt
 import IPython
 import TemplateConfig
 
+print("===============================================================================================")
+
 st.sidebar.image("logo-black.png")
 # add_logo("logo-black.png")
 st.markdown(TemplateConfig.page_bg, unsafe_allow_html=True)
@@ -32,15 +34,12 @@ def extract_code_from_text(text):
     else:
         return None
 
-def get_sql_response(schema,question,chat_history):
+def get_sql_response(schema,question):
         
         sql_prompt = {
         "prompt":f"""You are a data analyst at a company. You are interacting with a user who is asking you questions about the company's database.
         Based on the table schema below, write a SQL query that would answer the user's question. 
-        Take the conversation history alias chat history into account before writing the query.
-        Give higher weightage and consider conversation history when user mentions terms like "these", "above", "earlier", "previous" etc. and choose the filter conditions accordingly.
-
-        Conversation History: {chat_history} 
+    
         <SCHEMA>{schema}</SCHEMA>
         
         Write only the SQL query and nothing else. Do not wrap the SQL query in any other text, not even backticks. Generate the sql query without any line breaks
@@ -54,7 +53,7 @@ def get_sql_response(schema,question,chat_history):
         Your turn:
         {question}
     
-        """.format(schema,question,chat_history)}
+        """.format(schema,question)}
 
         response = requests.post(model.url, json=sql_prompt, headers=model.headers)
         # print(response.json()['text'])
@@ -62,18 +61,16 @@ def get_sql_response(schema,question,chat_history):
         return response.json()['text']
 
 
-def get_plot_response(schema, question, query, sql_engine, db,data,chat_history):
+def get_plot_response(schema, question, query, sql_engine, db,data):
         
         plot_prompt = {
             "prompt":f"""You are a data analyst at a company. You are interacting with a user who wants to create python visualization report based on the data.
             Based on the below table schema,user question, sql query and the data output from sql query, write a python query to plot the output data in a python graph. 
             you can use the schema information from variable schema and use the "sql_engine" variable to establish connection to the db and create the dataframe.
-            Take the conversation history into account.
             
             Consider the input sql query with out any line breaks.
             Give an alias name for each and every column used in the query. no exceptions
             
-                Conversation History: {chat_history} 
                 User question: {question}
                 SQL Query: <SQL>{query}</SQL>
                 Data : {data}
@@ -111,13 +108,13 @@ def get_plot_response(schema, question, query, sql_engine, db,data,chat_history)
             You can return none if the data frame has just only 1 column or only 1 row or if the plot is more complicated to fit in traditional plotting style.
             Your turn:
 
-            """.format(schema,question,query,sql_engine,db,chat_history)
+            """.format(schema,question,query,sql_engine,db)
             }
         response = requests.post(model.url, json=plot_prompt, headers=model.headers)
         print(response.json()['text'])
         return response.json()['text']
 
-def get_lang_response(schema, question, query, sql_engine, db, data,chat_history):      
+def get_lang_response(schema, question, query, sql_engine, db, data):      
         lang_prompt = {
             "prompt":f"""You are a data analyst at a company. You are interacting with a user who is asking you questions about the company's database.
             Based on the table schema below, user question, sql query and data, Write a natural language response.
@@ -130,7 +127,7 @@ def get_lang_response(schema, question, query, sql_engine, db, data,chat_history
                 SQL Engine : {sql_engine}
                 Database " {db}
             
-            """.format(schema,question,query,sql_engine,db,data,chat_history)
+            """.format(schema,question,query,sql_engine,db,data)
             }
         response = requests.post(model.url, json=lang_prompt, headers=model.headers)
         print(response.json()['text'])
@@ -192,11 +189,11 @@ if user_query is not None and user_query.strip() != "":
     
     with st.chat_message("AI"):
         # response = get_response(user)
-        sql_response = get_sql_response(schema=schema,question= user_query,chat_history= st.session_state.chat_history)
+        sql_response = get_sql_response(schema=schema,question= user_query)
         data =  pd.read_sql_query(sql_response, sql_engine)
-        sql_response = get_plot_response(schema=schema, query=sql_response, sql_engine= sql_engine, db= db, question=user_query,data = data, chat_history= st.session_state.chat_history)  
+        sql_response = get_plot_response(schema=schema, query=sql_response, sql_engine= sql_engine, db= db, question=user_query,data = data)  
         plot_response = extract_code_from_text(sql_response)
-        lang_response = get_lang_response(schema=schema, query=sql_response, sql_engine= sql_engine, db= db, question=user_query, data = data,chat_history= st.session_state.chat_history)
+        lang_response = get_lang_response(schema=schema, query=sql_response, sql_engine= sql_engine, db= db, question=user_query, data = data)
         st.markdown(lang_response)
         try:
             exec(plot_response)
@@ -208,6 +205,7 @@ if user_query is not None and user_query.strip() != "":
                     if isinstance(chart, alt.Chart):
                         # Display the Altair chart
                         st.altair_chart(chart.interactive(), use_container_width=True)
+                        chart.save("chart.html", embed_options={'renderer':'svg'})
 
                         # Append the chart object to the chat history
                         # st.session_state.chat_history.append(chart)
@@ -226,3 +224,5 @@ if user_query is not None and user_query.strip() != "":
 
     # st.session_state.query_history.append(AIMessage(content = sql_response)
     st.session_state.chat_history.append(AIMessage(content = lang_response))
+
+print("===============================================================================================")
